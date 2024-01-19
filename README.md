@@ -1,4 +1,4 @@
-# cutrace - a debugging trace tool analagous to [strace](https://strace.io/) for CUDA
+# cutrace - a debugging trace tool analogous to [strace](https://strace.io/) for CUDA
 
 This is cutrace -- a diagnostic, debugging and instructional utility for CUDA.
 CUDA Driver and Runtime API calls are intercepted via a dynamically linked
@@ -13,50 +13,50 @@ This has been tested on Ubuntu 22.04 with CUDA 12.2.
 ```
 % git clone https://github.com/atomicapple0/cutrace.git
 % cd cutrace
-% cargo build --release
-% export CUTRACE_PATH=$PWD/target/release/libcutrace.so
+% cargo build
+% export CUTRACE_PATH=$PWD/target/debug/libcutrace.so
 ```
 
 ## Usage
 ```
-% cd example
-% LD_PRELOAD=$CUTRACE_PATH ./saxpy
-cuInit(0) = CUDA_SUCCESS
-cuDeviceGet(&dev=07ffff100, 0) = CUDA_SUCCESS
-  > dev = 0
-cuCtxCreate_v2(&ctx=07ffff200, 0x0, dev=0) = CUDA_SUCCESS
-  > ctx = 0x30000000
-cuModuleLoadData(&mod=07ffff300, 0xbeefdead) = CUDA_SUCCESS
-  > mod = 0x30000100
-cuModuleGetFunction(&func=07ffff400, mod=0x30000100, "my_kernel") = CUDA_SUCCESS
-  > func = 0x30000200
-cuMemAlloc_v2(&dptr=07ffff500, bytes=0x1000) = CUDA_SUCCESS
-  > dptr = 0x60000000
-cuLaunchKernel_v2(func=0x30000200, grid={1, 1, 1}, block={1, 1, 1}, shm_bytes=0x0, stream=CU_NULL_STREAM, ...) = CUDA_SUCCESS
-  > my_kernel<<<{1,1,1}, {1,1,1}, 0x0, CU_NULL_STREAM>>>(0x60000000, 0x1000)
+% cd examples/alphabet
+% make
+% LD_PRELOAD=$CUTRACE_PATH ./alphabet 
+cuInit(.flags=0) = CUDA_SUCCESS
+cuDeviceGet(.dev_ref=0x7ffdc1da9bdc, .ord=0) = CUDA_SUCCESS
+  > *.dev_ref = 0
+cuDevicePrimaryCtxRetain(.ctx_ref=0x7ffdc1da9be0, .dev=0) = CUDA_SUCCESS
+  > *.ctx_ref = 0x560a643f55a0
+cuCtxSetCurrent(.ctx=0x560a643f55a0) = CUDA_SUCCESS
+cuModuleLoad(.cmod_ref=0x7ffdc1da9bd0, .file_name=0x560a63400040) = CUDA_SUCCESS
+  > *.cmod_ref = 0x560a64c604b0
+cuModuleGetFunction(.func_ref=0x7ffdc1da9bc8, .cmod=0x560a64c604b0, .func_name=0x560a63400055) = CUDA_SUCCESS
+  > *.func_ref = 0x560a64c6c440
+cuLaunchKernel(.func=0x560a64c6c440, .grid_x=1, .grid_y=1, .grid_z=1, .block_x=1, .block_y=1, .block_z=1, .nbytes_shared=0, .stream=0x0, .kernel_params=0x0, .extra=0x7ffdc1da98c0) = CUDA_SUCCESS
 ...
 ```
 
 ## Feature Progress
-This tool is a WIP. Many CUDA calls are not yet supported. Some intercepted
-calls lack proper argument or return parsing. 
+This tool is a WIP and there will be bugs. Many CUDA calls are not yet
+supported. Some intercepted calls lack proper argument or return parsing. 
 
-Progress
+### Checklist
 - [x] formatting for basic CUDA Driver API calls
-- [x] formatting for basic CUDA Runtime API calls
+- [ ] formatting for basic CUDA Runtime API calls
 - [ ] start time and duration of API calls
 - [ ] adjustable verbosity levels
 - [ ] toggleable printing of arguments and return values
 - [ ] toggleable printing by API variant (eg: `--only-kernel-launches`)
 - [ ] formatting for all CUDA Driver API calls
 - [ ] formatting for all CUDA Runtime API calls
+- [ ] cuBlas, cuDNN, cuFFT, cuSPARSE, etc
 
 ## What about [nsys](https://docs.nvidia.com/nsight-systems/UserGuide/index.html)?
-nsys is a great tool for profiling CUDA applications. However the api trace
-dump is rather terse, lacking the ability to print the arguments and return
-values of each API call. cutrace aims to provide more extensive debugging info.
+nsys is a great tool for profiling CUDA applications. However the api trace dump
+is rather terse, lacking the ability to print the arguments and return values of
+each API call. cutrace aims to provide more extensive debugging info.
 ```
-% cd example
+% cd examples/saxpy
 % nsys profile --trace=cuda --sample=none --cpuctxsw=none ./saxpy
 % nsys stats --format csv --output - --report cuda_api_trace report1.nsys-rep
 Generating SQLite file report1.sqlite from report1.nsys-rep
