@@ -72,6 +72,7 @@ int main(int argc, char **argv)
 		CU_LAUNCH_PARAM_BUFFER_SIZE,    &offset,
 		CU_LAUNCH_PARAM_END
 	};
+    cuMemcpy(0,0,0);
 	
 	result = cuLaunchKernel(f, 1, 1, 1, 1, 1, 1, 0, NULL,
 				NULL, config);
