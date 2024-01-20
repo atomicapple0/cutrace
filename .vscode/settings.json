@@ -1,0 +1,22 @@
+{
+    "files.associations": {
+        "*.sml": "sml",
+        "*.pdf": "pdf",
+        "*.tex": "plaintext",
+        "*.py": "python",
+        "*.cnot": "c0",
+        "*.sig": "sml",
+        "*.cm": "plaintext",
+        "*.ino": "cpp",
+        "*.c1": "c0",
+        "*.html": "html",
+        "*.l2": "c",
+        "*.l3": "c",
+        "*.l4": "c0",
+        "*.l1": "c0",
+        "*.l6": "c0",
+        "*.l5": "c0",
+        "functional": "c",
+        "__locale": "c"
+    }
+}

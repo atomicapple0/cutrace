@@ -5,12 +5,11 @@ LDLIBS = -lcuda -lcudart
 
 all: alphabet
 
-alphabet: alphabet.c mod.ptx cuda_error.o
+alphabet: alphabet.c mod.fatbin cuda_error.o
 	$(CC) $(CFLAGS) -o alphabet alphabet.c cuda_error.o $(LDLIBS)
 
 cuda_error.o: cuda_error.c
-	$(CC) $(CFLAGS) -c -o cuda_error.o cuda_error.c \
-	    $(LDLIBS)
+	$(CC) $(CFLAGS) -c -o cuda_error.o cuda_error.c $(LDLIBS)
 
-mod.ptx: mod.cu
-	nvcc -ptx mod.cu
+mod.fatbin: mod.cu
+	nvcc -fatbin -arch=compute_80 -code=sm_80 mod.cu

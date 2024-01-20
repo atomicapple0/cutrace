@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     ffi::{c_char, c_uint, CStr, CString},
-    sync::RwLock,
+    sync::{Mutex, RwLock},
 };
 
 use cudarc::driver::sys::{CUdeviceptr, CUresult};
@@ -13,7 +13,7 @@ unsafe impl Send for SharedObj {}
 unsafe impl Sync for SharedObj {}
 pub struct SymbolLoader {
     shared_obj: SharedObj,
-    symbols: RwLock<HashMap<&'static str, fn()>>,
+    symbols: Mutex<HashMap<&'static str, fn()>>,
 }
 
 impl SymbolLoader {
@@ -24,7 +24,7 @@ impl SymbolLoader {
                 libc::RTLD_NOW | libc::RTLD_NODELETE,
             ))
         };
-        let symbols = RwLock::new(HashMap::new());
+        let symbols = Mutex::new(HashMap::new());
         Self {
             shared_obj,
             symbols,
@@ -32,20 +32,12 @@ impl SymbolLoader {
     }
 
     pub fn get_symbol(&self, name: &'static str) -> fn() {
-        let map = self.symbols.read().unwrap();
-        match map.get(name) {
-            Some(f) => *f,
-            None => {
-                drop(map);
-                let mut map = self.symbols.write().unwrap();
-                let f = *map.entry(name).or_insert_with(|| {
-                    let name = CString::new(name).unwrap();
-                    let sym = unsafe { libc::dlsym(self.shared_obj.0, name.as_ptr() as _) };
-                    assert!(!sym.is_null());
-                    unsafe { std::mem::transmute::<*const c_void, fn()>(sym) }
-                });
-                f
-            }
-        }
+        let mut map = self.symbols.lock().unwrap();
+        *map.entry(name).or_insert_with(|| {
+            let name = CString::new(name).unwrap();
+            let sym = unsafe { libc::dlsym(self.shared_obj.0, name.as_ptr() as _) };
+            assert!(!sym.is_null());
+            unsafe { std::mem::transmute::<*const c_void, fn()>(sym) }
+        })
     }
 }

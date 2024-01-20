@@ -39,8 +39,15 @@ int main(int argc, char **argv)
 		cuda_error(EXIT_FAILURE, result, "cuDevicePrimaryCtxRetain");
 	if ((result = cuCtxSetCurrent(ctx)) != CUDA_SUCCESS)
 		cuda_error(EXIT_FAILURE, result, "cuCtxSetCurrent");
-	if ((result = cuModuleLoad(&mod, "mod.ptx")) != CUDA_SUCCESS)
-		cuda_error(EXIT_FAILURE, result, "cuModuleLoad");
+    if ((fd = open("mod.fatbin", O_RDONLY)) == -1)
+		err(EXIT_FAILURE, "open");
+	if (fstat(fd, &stat) == -1)
+		err(EXIT_FAILURE, "fstat");
+	if ((img = mmap(NULL, stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0))
+	    == MAP_FAILED)
+		err(EXIT_FAILURE, "mmap");
+	if ((result = cuModuleLoadData(&mod, img)) != CUDA_SUCCESS)
+		cuda_error(EXIT_FAILURE, result, "cuModuleLoadData");
 	if ((result = cuModuleGetFunction(&f, mod, "alphabet")) != CUDA_SUCCESS)
 		cuda_error(EXIT_FAILURE, result, "cuModuleGetFunction");
 	
@@ -72,7 +79,6 @@ int main(int argc, char **argv)
 		CU_LAUNCH_PARAM_BUFFER_SIZE,    &offset,
 		CU_LAUNCH_PARAM_END
 	};
-    cuMemcpy(0,0,0);
 	
 	result = cuLaunchKernel(f, 1, 1, 1, 1, 1, 1, 0, NULL,
 				NULL, config);

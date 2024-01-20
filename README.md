@@ -18,22 +18,37 @@ This has been tested on Ubuntu 22.04 with CUDA 12.2.
 ```
 
 ## Usage
+### Basic Usage
 ```
 % cd examples/alphabet
 % make
 % LD_PRELOAD=$CUTRACE_PATH ./alphabet 
-cuInit(.flags=0) = CUDA_SUCCESS
-cuDeviceGet(.dev_ref=0x7ffdc1da9bdc, .ord=0) = CUDA_SUCCESS
-  > *.dev_ref = 0
-cuDevicePrimaryCtxRetain(.ctx_ref=0x7ffdc1da9be0, .dev=0) = CUDA_SUCCESS
-  > *.ctx_ref = 0x560a643f55a0
-cuCtxSetCurrent(.ctx=0x560a643f55a0) = CUDA_SUCCESS
-cuModuleLoad(.cmod_ref=0x7ffdc1da9bd0, .file_name=0x560a63400040) = CUDA_SUCCESS
-  > *.cmod_ref = 0x560a64c604b0
-cuModuleGetFunction(.func_ref=0x7ffdc1da9bc8, .cmod=0x560a64c604b0, .func_name=0x560a63400055) = CUDA_SUCCESS
-  > *.func_ref = 0x560a64c6c440
-cuLaunchKernel(.func=0x560a64c6c440, .grid_x=1, .grid_y=1, .grid_z=1, .block_x=1, .block_y=1, .block_z=1, .nbytes_shared=0, .stream=0x0, .kernel_params=0x0, .extra=0x7ffdc1da98c0) = CUDA_SUCCESS
+[0ms] cuInit(.Flags=0) = CUDA_SUCCESS
+[58ms] cuDeviceGet(.device=0x7fff6d156c8c, .ordinal=0) = CUDA_SUCCESS
+  > *.device = 0
+[58ms] cuDevicePrimaryCtxRetain(.pctx=0x7fff6d156c90, .dev=0) = CUDA_SUCCESS
+  > *.pctx = CUctx_0x55c5115095a0
+[407ms] cuCtxSetCurrent(.ctx=CUctx_0x55c5115095a0) = CUDA_SUCCESS
+[407ms] cuModuleLoadData(.module=0x7fff6d156c80, .image=0x7f917de92000) = CUDA_SUCCESS
+  > *.module = CUmod_0x55c511d746e0
+[411ms] cuModuleGetFunction(.hfunc=0x7fff6d156c78, .hmod=CUmod_0x55c511d746e0, .name="alphabet") = CUDA_SUCCESS
+  > *.hfunc = CUfunc_alphabet
+[411ms] cuLaunchKernel(.f=CUfunc_alphabet, .gridDimX=1, .gridDimY=1, .gridDimZ=1, .blockDimX=1, .blockDimY=1, .blockDimZ=1, .sharedMemBytes=0, .hStream=CUstream_NULL, .kernelParams=0x0, .extra=0x7fff6d156970) = CUDA_SUCCESS
+  > alphabet<<<{1,1,1},{1,1,1},CUstream_NULL>>>(...)
 ...
+```
+### Get unique API calls
+```
+% LD_PRELOAD=$CUTRACE_PATH ./alphabet | cut -d' ' -f2 | cut -d'(' -f1 | sort | uniq | grep "^cu"
+cuCtxSetCurrent
+cuCtxSynchronize
+cuDeviceGet
+cuDevicePrimaryCtxRetain
+cuInit
+cuLaunchKernel
+cuMemcpy
+cuModuleGetFunction
+cuModuleLoad
 ```
 
 ## Feature Progress
@@ -42,7 +57,7 @@ supported. Some intercepted calls lack proper argument or return parsing.
 
 ### Checklist
 - [x] formatting for basic CUDA Driver API calls
-- [ ] formatting for basic CUDA Runtime API calls
+- [x] formatting for basic CUDA Runtime API calls
 - [ ] start time and duration of API calls
 - [ ] adjustable verbosity levels
 - [ ] toggleable printing of arguments and return values
