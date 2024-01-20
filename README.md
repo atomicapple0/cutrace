@@ -39,7 +39,7 @@ This has been tested on Ubuntu 22.04 with CUDA 12.2.
 ```
 ### Get unique API calls
 ```
-% LD_PRELOAD=$CUTRACE_PATH ./alphabet | cut -d' ' -f2 | cut -d'(' -f1 | sort | uniq | grep "^cu"
+% LD_PRELOAD=$CUTRACE_PATH ./alphabet | cut -d'(' -f1 | sort | uniq | grep "^cu"
 cuCtxSetCurrent
 cuCtxSynchronize
 cuDeviceGet
@@ -50,6 +50,22 @@ cuMemcpy
 cuModuleGetFunction
 cuModuleLoad
 ```
+### See device and pinned buffers
+```
+~/yolov2$ LD_PRELOAD=$CUTRACE_PATH python3 inference.py -o appA.txt yolov2.1.so -n1
+[0ms] cudaSetDevice(.device=0) = cudaSuccess
+[265ms] cudaMemGetInfo(.free=0x7fffae342228, .total=0x7fffae342230) = cudaSuccess
+  > *.free = 5c2b50000
+  > *.total = 5dfe30000
+[265ms] cudaMalloc(.devPtr=0x7fffae342220, .size=2076672) = cudaSuccess
+  > *.devPtr = 0x7f987d000000 : dev_7f987d000000[0x1fb000]
+[402ms] cuLaunchKernel(.f=CUfunc_tvmgen_default_fused_nn_conv2d_add_nn_leaky_relu_3_kernel, .gridDimX=4, .gridDimY=52, .gridDimZ=1, .blockDimX=13, .blockDimY=1, .blockDimZ=16, .sharedMemBytes=0, .hStream=CUstream_NULL, .kernelParams=0x7fffae3425d0, .extra=0x0) = CUDA_SUCCESS
+  > tvmgen_default_fused_nn_conv2d_add_nn_leaky_relu_3_kernel<<<{4,52,1},{13,1,16},CUstream_NULL>>>(...)
+    > arg0: 0x7f9871600000 : dev_7f9871600000[0x548000]
+    > arg1: 0x7f9870000000 : dev_7f9870000000[0x1520000]
+    > arg2: 0x7f9871c5a000 : dev_7f9871c5a000[0x8000]
+    > arg3: 0x7f987d1fc400 : dev_7f987d1fc400[0x100]
+```
 
 ## Feature Progress
 This tool is a WIP and there will be bugs. Many CUDA calls are not yet
@@ -58,7 +74,7 @@ supported. Some intercepted calls lack proper argument or return parsing.
 ### Checklist
 - [x] formatting for basic CUDA Driver API calls
 - [x] formatting for basic CUDA Runtime API calls
-- [ ] start time and duration of API calls
+- [x] start time and duration of API calls
 - [ ] adjustable verbosity levels
 - [ ] toggleable printing of arguments and return values
 - [ ] toggleable printing by API variant (eg: `--only-kernel-launches`)

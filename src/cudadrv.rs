@@ -315,7 +315,6 @@ cudadrv_fn!(cuLaunchKernel(f: CUfunction, gridDimX: c_uint, gridDimY: c_uint, gr
     if !kernelParams.is_null() {
         for (idx, &CUfuncParamSize { size, offset: _ }) in param_sizes.iter().enumerate() {
             let argbufptr = unsafe { *kernelParams.add(idx) };
-            println!("woo");
             match size {
                 1 => {
                     let arg = unsafe { *(argbufptr as *mut u8) };

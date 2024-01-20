@@ -19,7 +19,7 @@ use libc::c_void;
 use once_cell::sync::Lazy;
 use symbol_loader::SymbolLoader;
 
-static START_TIME : Lazy<std::time::Instant> = Lazy::new(|| std::time::Instant::now());
+static START_TIME: Lazy<std::time::Instant> = Lazy::new(|| std::time::Instant::now());
 
 const CUDADRV_PATH: &CStr = c"libcuda.so.535.86.10";
 const CUDADRT_PATH: &CStr = c"libcudart.so.12";
@@ -43,9 +43,8 @@ macro_rules! gen {
         pub extern "C" fn $fn_name($($arg: $arg_ty),*) -> $ret_ty {
             use std::io::Write;
             use std::io::stdout;
-            let now = std::time::Instant::now();
-            let elapsed = now.duration_since(*$crate::START_TIME);
-            print!("[{}ms] {}", elapsed.as_millis(), stringify!($fn_name));
+            let before = std::time::Instant::now();
+            print!("{}", stringify!($fn_name));
             stdout().flush().unwrap();
             let args : &[String] = &[$(
                 format!(".{}={:?}", stringify!($arg), $arg),
@@ -56,7 +55,11 @@ macro_rules! gen {
             let sym = $symbols.get_symbol(stringify!($fn_name));
             let fn_ptr: extern "C" fn($($arg_ty),*) -> $ret_ty = unsafe { ::core::mem::transmute(sym) };
             let res = fn_ptr($($arg),*);
-            println!("{:?}", res);
+
+            let after = std::time::Instant::now();
+            let start = before.duration_since(*$crate::START_TIME);
+            let elapsed = after.duration_since(before);
+            println!("{:?}\t[{:?}ms,{:?}ms]", res, start.as_millis(), elapsed.as_millis());
 
             $block
 
