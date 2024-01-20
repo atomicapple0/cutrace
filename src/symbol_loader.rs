@@ -1,12 +1,10 @@
 use std::{
     collections::HashMap,
-    ffi::{c_char, c_uint, CStr, CString},
-    sync::{Mutex, RwLock},
+    ffi::{c_char, CStr, CString},
+    sync::Mutex,
 };
 
-use cudarc::driver::sys::{CUdeviceptr, CUresult};
 use libc::c_void;
-use once_cell::sync::Lazy;
 
 struct SharedObj(*mut c_void);
 unsafe impl Send for SharedObj {}

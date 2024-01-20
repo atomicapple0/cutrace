@@ -1,4 +1,4 @@
-use std::ffi::{c_char, c_int, c_uchar, c_uint, c_ulonglong, c_ushort, c_void};
+use std::ffi::{c_char, c_int, c_uint, c_ulonglong, c_void};
 
 use cudarc::runtime::sys::{
     cudaArrayMemoryRequirements, cudaArraySparseProperties, cudaArray_const_t, cudaArray_t,

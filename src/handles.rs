@@ -120,22 +120,32 @@ impl std::fmt::Debug for WCUmodule {
 impl std::fmt::Debug for WCUdeviceptr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let device_mem = DEVICE_MEM.lock().unwrap();
-        let (base, size) = device_mem
+        let (base, size) = *device_mem
             .get(&(self.0 as _))
             .expect(format!("{:#x?} not found", self.0).as_str());
-        let s = format!("{:#x?} : dev_{:x?}[{:#x?}]", self.0, base, size);
-        write!(f, "{}", s.red().on_bright_white())
+        let s = format!(
+            "dev_{:x?}({})[{}]",
+            base,
+            size,
+            self.0 as usize - base
+        );
+        write!(f, "{}", s.red().on_green())
     }
 }
 
 impl std::fmt::Debug for WCUpinnedptr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let pinned_mem = PINNED_MEM.lock().unwrap();
-        let (base, size) = pinned_mem
+        let (base, size) = *pinned_mem
             .get(&(self.0 as _))
             .expect(format!("{:#x?} not found", self.0).as_str());
-        let s = format!("{:#x?} : pin_{:x?}[{:#x?}]", self.0, base, size);
-        write!(f, "{}", s.blue().on_bright_white())
+        let s = format!(
+            "dev_{:x?}({})[{}]",
+            base,
+            size,
+            self.0 as usize - base
+        );
+        write!(f, "{}", s.blue().on_green())
     }
 }
 
@@ -153,7 +163,7 @@ impl std::fmt::Debug for WCUunknownptr {
             (None, Some(_)) => WCUpinnedptr(self.0).fmt(f),
             _ => {
                 let s = format!("host_{:x?}", self.0);
-                write!(f, "{}", s.yellow().on_bright_white())
+                write!(f, "{}", s.yellow().on_green())
             }
         }
     }

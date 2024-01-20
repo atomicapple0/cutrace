@@ -34,8 +34,8 @@ use crate::{
     cudadrv_fn,
     fatbin::{is_fatbin, parse_func_sigs_from_fatbin, CUfuncParamSize},
     gen,
-    handles::{FatBinPtr, WCUunknownptr, CUFUNC_INFO, CUFUNC_SIG, CUMOD_FATBIN, DEVICE_MEM},
-    print_refs,
+    handles::{FatBinPtr, WCUunknownptr, CUFUNC_INFO, CUFUNC_SIG, CUMOD_FATBIN},
+    log, print_refs,
 };
 
 use crate::handles::WCUcontext as CUcontext;
@@ -308,9 +308,11 @@ cudadrv_fn!(cuLaunchKernel(f: CUfunction, gridDimX: c_uint, gridDimY: c_uint, gr
         cufunc_sig.insert(*cmod, fn_sigs);
     }
 
-    let param_sizes = cufunc_sig.get(cmod).unwrap().get(func_name).unwrap();
+    let param_sizes = cufunc_sig.get(cmod).unwrap().get(func_name).unwrap().clone();
+    drop(cufunc_info);
+    drop(cufunc_sig);
 
-    println!("  > {}<<<{{{},{},{}}},{{{},{},{}}},{:x?}>>>(...)", func_name, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, hStream);
+    log!(LOG_KERNEL, "  > {:?}<<<{{{},{},{}}},{{{},{},{}}},{:x?}>>>(...)\n", f, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, hStream);
 
     if !kernelParams.is_null() {
         for (idx, &CUfuncParamSize { size, offset: _ }) in param_sizes.iter().enumerate() {
@@ -318,22 +320,22 @@ cudadrv_fn!(cuLaunchKernel(f: CUfunction, gridDimX: c_uint, gridDimY: c_uint, gr
             match size {
                 1 => {
                     let arg = unsafe { *(argbufptr as *mut u8) };
-                    println!("    > arg{}: {:#x?}", idx, arg);
+                    log!(LOG_KERNEL, "    > arg{}: {:#x?}\n", idx, arg);
                 }
                 4 => {
                     let arg = unsafe { *(argbufptr as *mut u32) };
-                    println!("    > arg{}: {:#x?}", idx, arg);
+                    log!(LOG_KERNEL, "    > arg{}: {:#x?}\n", idx, arg);
                 }
                 8 => {
                     let arg = unsafe { *(argbufptr as *mut u64) };
-                    println!("    > arg{}: {:#x?}", idx, WCUunknownptr(arg));
+                    log!(LOG_KERNEL, "    > arg{}: {:#x?}\n", idx, WCUunknownptr(arg));
                 }
                 16 => {
                     let arg = unsafe { *(argbufptr as *mut u128) };
-                    println!("    > arg{}: {:#x?}", idx, arg);
+                    log!(LOG_KERNEL, "    > arg{}: {:#x?}\n", idx, arg);
                 }
                 _ => {
-                    println!("    > &arg{}: {:#x?}", idx, argbufptr);
+                    log!(LOG_KERNEL, "    > &arg{}: {:#x?}\n", idx, argbufptr);
                 }
             }
         }

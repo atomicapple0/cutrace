@@ -6,16 +6,11 @@ mod cudadrv;
 mod cudart;
 mod fatbin;
 mod handles;
+mod log;
 mod symbol_loader;
 
-use std::ffi::{c_char, c_float, c_int, c_uint, CStr};
+use std::ffi::CStr;
 
-use cudarc::driver::sys::{
-    CUcontext, CUdevice, CUdevice_attribute, CUdeviceptr, CUevent, CUfunction,
-    CUfunction_attribute, CUmodule, CUmoduleLoadingMode, CUresult, CUstream, CUstreamCaptureStatus,
-    CUuuid,
-};
-use libc::c_void;
 use once_cell::sync::Lazy;
 use symbol_loader::SymbolLoader;
 
@@ -26,16 +21,18 @@ const CUDADRT_PATH: &CStr = c"libcudart.so.12";
 
 static CUDADRV_SYMBOLS: Lazy<SymbolLoader> = Lazy::new(|| SymbolLoader::new(CUDADRV_PATH));
 static CUDART_SYMBOLS: Lazy<SymbolLoader> = Lazy::new(|| SymbolLoader::new(CUDADRT_PATH));
+
 #[macro_export]
 macro_rules! print_refs {
     ($($ref_arg: ident),*) => {
         $(
-            println!("  > *.{} = {:x?}", stringify!($ref_arg), unsafe {
+            $crate::log!("  > *.{} = {:x?}\n", stringify!($ref_arg), unsafe {
                 *$ref_arg
             });
         )*
     };
 }
+
 #[macro_export]
 macro_rules! gen {
     ($symbols: path, $fn_name: ident($($arg: ident: $arg_ty: ty),*) -> $ret_ty: ty, $block:block) => {
@@ -43,23 +40,23 @@ macro_rules! gen {
         pub extern "C" fn $fn_name($($arg: $arg_ty),*) -> $ret_ty {
             use std::io::Write;
             use std::io::stdout;
-            let before = std::time::Instant::now();
-            print!("{}", stringify!($fn_name));
+            $crate::log!("{}", stringify!($fn_name));
             stdout().flush().unwrap();
             let args : &[String] = &[$(
                 format!(".{}={:?}", stringify!($arg), $arg),
             )*];
-            print!("({}) = ", args.join(", "));
+            $crate::log!("({}) = ", args.join(", "));
             stdout().flush().unwrap();
 
+            let before = std::time::Instant::now();
             let sym = $symbols.get_symbol(stringify!($fn_name));
             let fn_ptr: extern "C" fn($($arg_ty),*) -> $ret_ty = unsafe { ::core::mem::transmute(sym) };
             let res = fn_ptr($($arg),*);
-
+            
             let after = std::time::Instant::now();
             let start = before.duration_since(*$crate::START_TIME);
             let elapsed = after.duration_since(before);
-            println!("{:?}\t[{:?}ms,{:?}ms]", res, start.as_millis(), elapsed.as_millis());
+            $crate::log!("{:?}\t[{:?}ms,{:?}ms]\n", res, start.as_millis(), elapsed.as_millis());
 
             $block
 

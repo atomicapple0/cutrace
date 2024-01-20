@@ -15,7 +15,6 @@ use parse_int::parse;
 
 use crate::handles::FatBinPtr;
 
-
 #[derive(Debug, Copy, Clone)]
 pub struct CUfuncParamSize {
     pub size: usize,
@@ -24,6 +23,7 @@ pub struct CUfuncParamSize {
 
 const FATBIN_MAGIC: usize = 0x00100001ba55ed50;
 
+#[allow(dead_code)]
 pub fn is_elf(img: *const c_void) -> bool {
     let mag: *const u8 = img as *const u8;
     unsafe {
@@ -38,6 +38,7 @@ pub fn is_fatbin(img: *const c_void) -> bool {
     unsafe { *(img as *const usize) == FATBIN_MAGIC }
 }
 
+#[allow(dead_code)]
 fn img_elf_parse_len(elf: *const c_void) -> usize {
     let hdr_ptr: *const Elf64_Ehdr = elf as *const Elf64_Ehdr;
     let hdr = unsafe { &*hdr_ptr };
@@ -60,6 +61,7 @@ fn img_fatbin_parse_len(fatbin: *const c_void) -> usize {
  * See cuModuleLoadData for a description of image. It may be an ELF object, a
  * PTX string, or a fatbin object.
  */
+#[allow(dead_code)]
 pub fn img_parse_len(img: *const c_void) -> usize {
     unsafe {
         if is_elf(img) {
